@@ -85,7 +85,7 @@ public class JavaMutexPerfs implements Runnable
 				
 		System.out.println("------------ using " + sharedCounter.type() + " ----------------------");
 		if (prio)
-			System.out.println("-- priority is set to MAX for thread 1 (among 0.." + (threadNumber - 1) + ") and MIN for the others");
+			System.out.println("-- priority is set to MAX for last the thread only (among 0.." + (threadNumber - 1) + ") and MIN for the others");
 		System.out.println("Starting " + threadNumber + " threads for " + ((timeMS + 999) / 1000) + " seconds");
 		System.out.println("...");
 		
@@ -98,13 +98,14 @@ public class JavaMutexPerfs implements Runnable
 			for (int i = 0; i < threadNumber; i++)
 			{
 				//threads[i].getThreadGroup().setMaxPriority(Thread.MAX_PRIORITY);
-				threads[i].setPriority((i == 1)? Thread.MAX_PRIORITY: Thread.MIN_PRIORITY);
+				threads[i].setPriority((i == (threadNumber - 1))? Thread.MAX_PRIORITY: Thread.MIN_PRIORITY);
 			}
 		
+                // start them all
 		for (int i = 0; i < threadNumber; i++)
 			threads[i].start();
 
-		// wait enough time
+		// wait required time
 		Thread.sleep(timeMS);
 		
 		// stop all threads
