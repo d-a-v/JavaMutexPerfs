@@ -134,7 +134,7 @@ public class JavaMutexPerfs implements Runnable
 		System.out.println("total in-threads iterations = " + total);
 		System.out.println("total iterations while running all threads: " + totalAllTogether + " (~" + (100 - (100 * (total - totalAllTogether) / total)) + "% of total)");
 		System.out.println("out-of-band iterations per thread: min = " + minOOB + " - max = " + maxOOB + " (~" + maxRatio + "%)");
-		System.out.println("shared counter result = " + sharedCounter.get());
+		System.out.println("shared counter result = " + sharedCounter.get() + " (should be " + total + ")");
 		if (total != sharedCounter.get())
 			System.out.println("THIS IS BAD (local <> shared)");
 		else
@@ -145,15 +145,15 @@ public class JavaMutexPerfs implements Runnable
 		System.out.println("Iterations per seconds: " + (perSec / 1000000.0f) + " M/s");
 		
 		String ratios = new String();
-		//float ratioTotal = 0;
+		float ratioTotal = 0;
 		for (int i = 0; i < threadNumber; i++)
 		{
 			float ratio = ((1f * threadNumber * counters[i].getIterationsAllTogether()) / totalAllTogether);
-			//ratioTotal += ratio;
+			ratioTotal += ratio;
 			ratios += (int)((100f * ratio) + 0.5f) + " ";
 		}
-		System.out.println("ratios (avg=100): " + ratios);
-		//System.out.println("ratio average = " + (100f * ratioTotal / threadNumber));
+		System.out.println("execution time ratios: " + ratios);
+		System.out.println("ratio average = " + (100f * ratioTotal / threadNumber));
 	}
 
 	public static void main (String args[]) throws InterruptedException
