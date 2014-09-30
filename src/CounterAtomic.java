@@ -8,7 +8,7 @@ public class CounterAtomic implements Counter
 	CounterAtomic () { }
 	CounterAtomic (long init) { counter.set(init); }
 
-	public String type () { return "AtomicLong"; }
+	public final String type () { return "AtomicLong"; }
 
 	public long get () { return counter.get(); }
 	public long getIncr () { return counter.getAndIncrement(); }

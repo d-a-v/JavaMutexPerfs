@@ -8,12 +8,12 @@ public class CounterLock extends ReentrantLock implements Counter
 	CounterLock () { counter = 0; }
 	CounterLock (long init) { counter = init; }
 	
-	public String type () { return "ReentrantLock"; }
+	public final String type () { return "ReentrantLock"; }
 
 	public long get () { return counter; }
 	public long getIncr () { long ret; lock(); ret = counter++; unlock(); return ret; }
 	public long incrGet () { long ret; lock(); ret = ++counter; unlock(); return ret; }
 	public long getDecr () { long ret; lock(); ret = counter--; unlock(); return ret; }
 	public long decrGet () { long ret; lock(); ret = --counter; unlock(); return ret; }
-	public void set (long newVal) { lock(); counter = newVal; unlock(); }
+	public void set (long newVal) { counter = newVal; }
 }

@@ -6,7 +6,7 @@ public class CounterNoLock implements Counter
 	CounterNoLock () { counter = 0; }
 	CounterNoLock (long init) { counter = init; }
 
-	public String type () { return "No-Locking"; }
+	public final String type () { return "No-Locking"; }
 	
 	public long get () { return counter; }
 	public long getIncr () { return counter++; }
