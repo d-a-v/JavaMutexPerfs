@@ -156,11 +156,40 @@ public class JavaMutexPerfs implements Runnable
 		System.out.println("ratio average = " + (100f * ratioTotal / threadNumber));
 	}
 
+	public static void help ()
+	{
+	        System.out.println("usage:");
+	        System.out.println("	-h|--help");
+	        System.out.println("	-n <#>		- thread number");
+	        System.out.println("	-p <0|1>	- whether to use prio (1) or not (0)");
+	        System.out.println("	-t <#>		- running duration per test in ms");
+	}
+
 	public static void main (String args[]) throws InterruptedException
 	{
 		int n = 50;
 		int timeMS = 10000;
 		boolean prio = true;
+		
+		for (int i = 0; i < args.length; i++)
+		{
+		        if (args[i].equals("-n"))
+		                n = new Integer(args[++i]).intValue();
+                        else if (args[i].equals("-p"))
+                                prio = args[++i].charAt(0) != '0';
+                        else if (args[i].equals("-t"))
+                                timeMS = new Integer(args[++i]).intValue();
+                        else if (args[i].equals("-h") || args[i].equals("--help"))
+                                help();
+                        else
+                        {
+                                System.err.println("unrecognized option '" + args[i] + "'");
+                                help();
+                                return;
+                        }
+                }
+                
+                System.out.println("running with " + n + " threads during " + timeMS + "ms with" + (prio? "": "out") + " priority on last thread.");
 		
 		System.out.println("Doing stats for " + n + " threads during + " + ((timeMS + 999) / 1000) + " seconds");
 		System.out.println("");
