@@ -1,1 +1,1 @@
-gcj -O3 *.java --main=JavaMutexPerfs -o /tmp/JavaMuterPerfs && /tmp/JavaMuterPerfs
+gcj -O3 *.java --main=JavaMutexPerfs -o /tmp/JavaMuterPerfs && /tmp/JavaMuterPerfs "$@"

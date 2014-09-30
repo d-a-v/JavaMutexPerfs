@@ -1,1 +1,1 @@
-mkdir -p ../bin; javac -d ../bin JavaMutexPerfs.java && java -cp ../bin JavaMutexPerfs
+mkdir -p ../bin; javac -d ../bin JavaMutexPerfs.java && java -cp ../bin JavaMutexPerfs "$@"
