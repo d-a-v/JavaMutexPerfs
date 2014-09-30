@@ -11,7 +11,7 @@ public class CounterAtomic implements Counter
 	public String type () { return "AtomicLong"; }
 
 	public long get () { return counter.get(); }
-	public long getIncr () { return counter.getAndDecrement(); }
+	public long getIncr () { return counter.getAndIncrement(); }
 	public long incrGet () { return counter.incrementAndGet(); }
 	public long getDecr () { return counter.getAndDecrement(); }
 	public long decrGet () { return counter.decrementAndGet(); }
