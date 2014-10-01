@@ -1,24 +1,24 @@
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class JavaMutexPerfs implements Runnable
 {
-	private Counter sharedCounter;
-	private Counter aliveCounter;
 	private long iterationsAllTogether;
 	private long iterationsSelf;
 	private long iterationsNotAllTogether;
 	private int id;
-	private int maxThread;
 	
-	public static volatile Boolean stop; // volatile is MANDATORY here
-	public static volatile long timeStartMS;
-	public static volatile long timeStopMS;
+	private static Counter sharedCounter_s;
+	private static AtomicLong aliveCounter_s;
+	private static int threadNumber_s;
+
+	private static volatile Boolean stop_s; // volatile is MANDATORY here
+	private static volatile long timeStartMS_s;
+	private static volatile long timeStopMS_s;
 	
-	public JavaMutexPerfs (int id, int maxThread, Counter sharedCounter, Counter aliveCounter)
+	public JavaMutexPerfs (int id)
 	{
 		this.id = id;
-		this.maxThread = maxThread;
-		this.sharedCounter = sharedCounter;
-		this.aliveCounter = aliveCounter;
 		iterationsSelf = 0;
 		iterationsAllTogether = 0;
 		iterationsNotAllTogether = 0;
@@ -27,34 +27,34 @@ public class JavaMutexPerfs implements Runnable
 	public void run ()
 	{
 		// me, thread, has just come to life
-		aliveCounter.incrementAndGet();
+		aliveCounter_s.incrementAndGet();
 
 		// any newcoming thread reinitialize start time
-		timeStartMS = System.currentTimeMillis();
+		timeStartMS_s = System.currentTimeMillis();
 		
-		while (!stop)
+		while (!stop_s)
 		{
 			// increment shared counter
-			sharedCounter.incrementAndGet();	
+			sharedCounter_s.incrementAndGet();	
 			
 			// increment my number of iteration
 			++iterationsSelf;
 			
 			// count number of iteration only
 			// when all threads are running concurrently
-			if (aliveCounter.get() == maxThread)
+			if (aliveCounter_s.get() == threadNumber_s)
 				++iterationsAllTogether;
 			else
 				++iterationsNotAllTogether;
 		}
 
-		if (timeStopMS == 0)
+		if (timeStopMS_s == 0)
 			// only the first finishing thread initialize stop time
 			// race possible but not hurting here
-			timeStopMS = System.currentTimeMillis();
+			timeStopMS_s = System.currentTimeMillis();
 		
 		// me, thread, is not alive anymore
-		aliveCounter.decrementAndGet();
+		aliveCounter_s.decrementAndGet();
 	}
 	
 	public int getId ()
@@ -77,13 +77,15 @@ public class JavaMutexPerfs implements Runnable
 		return iterationsNotAllTogether;
 	}
 
-	public static void test (Counter sharedCounter, int threadNumber, int timeMS, boolean prio) throws InterruptedException
+	public static void test (Counter counter, int threadNumber, int timeMS, boolean prio) throws InterruptedException
 	{
-		Counter aliveCounter = new CounterLock();
-		stop = false;
-		timeStartMS = timeStopMS = 0;
+		stop_s = false;
+		timeStartMS_s = timeStopMS_s = 0;
+		aliveCounter_s = new AtomicLong(0);
+		sharedCounter_s = counter;
+		threadNumber_s = threadNumber;
 				
-		System.out.println("------------ using " + sharedCounter.type() + " ----------------------");
+		System.out.println("------------ using " + sharedCounter_s.type() + " ----------------------");
 		if (prio)
 			System.out.println("-- priority is set to MAX for last the thread only (among 0.." + (threadNumber - 1) + ") and MIN for the others");
 		System.out.println("Starting " + threadNumber + " threads for " + ((timeMS + 999) / 1000) + " seconds");
@@ -92,7 +94,7 @@ public class JavaMutexPerfs implements Runnable
 		JavaMutexPerfs counters[] = new JavaMutexPerfs [threadNumber];
 		Thread threads[] = new Thread [threadNumber];
 		for (int i = 0; i < threadNumber; i++)
-			threads[i] = new Thread(counters[i] = new JavaMutexPerfs(i, threadNumber, sharedCounter, aliveCounter));
+			threads[i] = new Thread(counters[i] = new JavaMutexPerfs(i));
 	
 		if (prio) 
 			for (int i = 0; i < threadNumber; i++)
@@ -109,7 +111,7 @@ public class JavaMutexPerfs implements Runnable
 		Thread.sleep(timeMS);
 		
 		// stop all threads
-		stop = true;
+		stop_s = true;
 		// wait for them to really stop
 		for (int i = 0; i < threadNumber; i++)
 			threads[i].join();
@@ -134,14 +136,14 @@ public class JavaMutexPerfs implements Runnable
 		System.out.println("total in-threads iterations = " + total);
 		System.out.println("total iterations while running all threads: " + totalAllTogether + " (~" + (100 - (100 * (total - totalAllTogether) / total)) + "% of total)");
 		System.out.println("out-of-band iterations per thread: min = " + minOOB + " - max = " + maxOOB + " (~" + maxRatio + "%)");
-		System.out.println("shared counter result = " + sharedCounter.get() + " (should be " + total + ")");
-		if (total != sharedCounter.get())
+		System.out.println("shared counter result = " + sharedCounter_s.get() + " (should be " + total + ")");
+		if (total != sharedCounter_s.get())
 			System.out.println("THIS IS BAD (local <> shared)");
 		else
 			System.out.println("Seems to be OK (local = shared)");			
 		
-		System.out.println("all together duration: " + (timeStopMS - timeStartMS) / 1000.0 + " seconds");
-		float perSec = totalAllTogether * 1000.0f / (timeStopMS - timeStartMS);
+		System.out.println("all together duration: " + (timeStopMS_s - timeStartMS_s) / 1000.0 + " seconds");
+		float perSec = totalAllTogether * 1000.0f / (timeStopMS_s - timeStartMS_s);
 		System.out.println("Iterations per seconds: " + (perSec / 1000000.0f) + " M/s");
 		
 		String ratios = new String();
