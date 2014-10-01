@@ -11,9 +11,9 @@ public class CounterLock extends ReentrantLock implements Counter
 	public final String type () { return "ReentrantLock"; }
 
 	public long get () { return counter; }
-	public long getIncr () { long ret; lock(); ret = counter++; unlock(); return ret; }
-	public long incrGet () { long ret; lock(); ret = ++counter; unlock(); return ret; }
-	public long getDecr () { long ret; lock(); ret = counter--; unlock(); return ret; }
-	public long decrGet () { long ret; lock(); ret = --counter; unlock(); return ret; }
+	public long getAndIncrement () { long ret; lock(); ret = counter++; unlock(); return ret; }
+	public long incrementAndGet () { long ret; lock(); ret = ++counter; unlock(); return ret; }
+	public long getAndDecrement () { long ret; lock(); ret = counter--; unlock(); return ret; }
+	public long decrementAndGet () { long ret; lock(); ret = --counter; unlock(); return ret; }
 	public void set (long newVal) { counter = newVal; }
 }

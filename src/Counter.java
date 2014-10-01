@@ -3,9 +3,9 @@ public interface Counter
 {
 	public String type ();
 	public long get ();
-	public long getIncr ();
-	public long incrGet ();
-	public long getDecr ();
-	public long decrGet ();
+	public long getAndIncrement ();
+	public long incrementAndGet ();
+	public long getAndDecrement ();
+	public long decrementAndGet ();
 	public void set (long newVal);
 }

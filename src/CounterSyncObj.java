@@ -8,9 +8,9 @@ public class CounterSyncObj implements Counter
 	public final String type () { return "Synchronized(this)"; }
 
 	public long get () { return counter; }
-	public long getIncr () { long ret; synchronized(this) { ret = counter++; } return ret; }
-	public long incrGet () { long ret; synchronized(this) { ret = ++counter; } return ret; }
-	public long getDecr () { long ret; synchronized(this) { ret = counter--; } return ret; }
-	public long decrGet () { long ret; synchronized(this) { ret = --counter; } return ret; }
+	public long getAndIncrement () { long ret; synchronized(this) { ret = counter++; } return ret; }
+	public long incrementAndGet () { long ret; synchronized(this) { ret = ++counter; } return ret; }
+	public long getAndDecrement () { long ret; synchronized(this) { ret = counter--; } return ret; }
+	public long decrementAndGet () { long ret; synchronized(this) { ret = --counter; } return ret; }
 	public void set (long newVal) { counter = newVal; }
 }

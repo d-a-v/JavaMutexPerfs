@@ -9,9 +9,9 @@ public class CounterNoLock implements Counter
 	public final String type () { return "No-Locking"; }
 	
 	public long get () { return counter; }
-	public long getIncr () { return counter++; }
-	public long incrGet () { return ++counter; }
-	public long getDecr () { return counter--; }
-	public long decrGet () { return --counter; }
+	public long getAndIncrement () { return counter++; }
+	public long incrementAndGet () { return ++counter; }
+	public long getAndDecrement () { return counter--; }
+	public long decrementAndGet () { return --counter; }
 	public void set (long newVal) { counter = newVal; }
 }

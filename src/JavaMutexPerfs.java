@@ -27,7 +27,7 @@ public class JavaMutexPerfs implements Runnable
 	public void run ()
 	{
 		// me, thread, has just come to life
-		aliveCounter.incrGet();
+		aliveCounter.incrementAndGet();
 
 		// any newcoming thread reinitialize start time
 		timeStartMS = System.currentTimeMillis();
@@ -35,7 +35,7 @@ public class JavaMutexPerfs implements Runnable
 		while (!stop)
 		{
 			// increment shared counter
-			sharedCounter.incrGet();	
+			sharedCounter.incrementAndGet();	
 			
 			// increment my number of iteration
 			++iterationsSelf;
@@ -54,7 +54,7 @@ public class JavaMutexPerfs implements Runnable
 			timeStopMS = System.currentTimeMillis();
 		
 		// me, thread, is not alive anymore
-		aliveCounter.decrGet();
+		aliveCounter.decrementAndGet();
 	}
 	
 	public int getId ()

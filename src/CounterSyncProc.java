@@ -8,9 +8,9 @@ public class CounterSyncProc implements Counter
 	public final String type () { return "Synchronized Function"; }
 
 	             public long get () { return counter; }
-	synchronized public long getIncr () { return counter++; }
-	synchronized public long incrGet () { return ++counter; }
-	synchronized public long getDecr () { return counter--; }
-	synchronized public long decrGet () { return --counter; }
+	synchronized public long getAndIncrement () { return counter++; }
+	synchronized public long incrementAndGet () { return ++counter; }
+	synchronized public long getAndDecrement () { return counter--; }
+	synchronized public long decrementAndGet () { return --counter; }
 	             public void set (long newVal) { counter = newVal; }
 }
