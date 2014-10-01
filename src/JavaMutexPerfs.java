@@ -11,6 +11,7 @@ public class JavaMutexPerfs implements Runnable
 	private static Counter sharedCounter_s;
 	private static AtomicLong aliveCounter_s;
 	private static int threadNumber_s;
+	private static boolean verbose_s = false;
 
 	private static volatile Boolean stop_s; // volatile is MANDATORY here
 	private static volatile long timeStartMS_s;
@@ -40,17 +41,18 @@ public class JavaMutexPerfs implements Runnable
 			// increment my number of iteration
 			++iterationsSelf;
 			
-			// count number of iteration only
-			// when all threads are running concurrently
+			// count number of iteration
 			if (aliveCounter_s.get() == threadNumber_s)
+        			// when all threads are running concurrently
 				++iterationsAllTogether;
 			else
+			        // when not all threads are running concurrently
 				++iterationsNotAllTogether;
 		}
 
 		if (timeStopMS_s == 0)
-			// only the first finishing thread initialize stop time
-			// race possible but not hurting here
+			// only the first finishing thread initializes stop time
+			// race is possible but not hurting here
 			timeStopMS_s = System.currentTimeMillis();
 		
 		// me, thread, is not alive anymore
@@ -87,25 +89,25 @@ public class JavaMutexPerfs implements Runnable
 				
 		System.out.println("------------ using " + sharedCounter_s.type() + " ----------------------");
 		if (prio)
-			System.out.println("-- priority is set to MAX for last the thread only (among 0.." + (threadNumber - 1) + ") and MIN for the others");
+			System.out.println("-- priority is set to MIN(threads 1.." + (threadNumber - 1) + "), MAX(thread " + threadNumber + ")");
 		System.out.println("Starting " + threadNumber + " threads for " + ((timeMS + 999) / 1000) + " seconds");
 		System.out.println("...");
 		
-		JavaMutexPerfs counters[] = new JavaMutexPerfs [threadNumber];
-		Thread threads[] = new Thread [threadNumber];
+		JavaMutexPerfs countingRunnable[] = new JavaMutexPerfs [threadNumber];
+		Thread countingThreads[] = new Thread [threadNumber];
 		for (int i = 0; i < threadNumber; i++)
-			threads[i] = new Thread(counters[i] = new JavaMutexPerfs(i));
+			countingThreads[i] = new Thread(countingRunnable[i] = new JavaMutexPerfs(i));
 	
 		if (prio) 
 			for (int i = 0; i < threadNumber; i++)
 			{
-				//threads[i].getThreadGroup().setMaxPriority(Thread.MAX_PRIORITY);
-				threads[i].setPriority((i == (threadNumber - 1))? Thread.MAX_PRIORITY: Thread.MIN_PRIORITY);
+				//countingThreads[i].getThreadGroup().setMaxPriority(Thread.MAX_PRIORITY);
+				countingThreads[i].setPriority((i == (threadNumber - 1))? Thread.MAX_PRIORITY: Thread.MIN_PRIORITY);
 			}
 		
                 // start them all
 		for (int i = 0; i < threadNumber; i++)
-			threads[i].start();
+			countingThreads[i].start();
 
 		// wait required time
 		Thread.sleep(timeMS);
@@ -114,48 +116,56 @@ public class JavaMutexPerfs implements Runnable
 		stop_s = true;
 		// wait for them to really stop
 		for (int i = 0; i < threadNumber; i++)
-			threads[i].join();
+			countingThreads[i].join();
 			
-		long total = 0;
+		long totalSelf = 0;
 		long totalAllTogether = 0;
 		long minOOB = -1;
 		long maxOOB = -1;
-		float maxRatio = 0;
+		double maxRatio = 0;
 		for (int i = 0; i < threadNumber; i++)
 		{
-			total += counters[i].getIterationsSelf();
-			totalAllTogether += counters[i].getIterationsAllTogether();			
-			if (minOOB == -1 || counters[i].getIterationsNotAllTogether() < minOOB)
-				minOOB = counters[i].getIterationsNotAllTogether();
-			if (maxOOB == -1 || counters[i].getIterationsNotAllTogether() > maxOOB)
+			totalSelf += countingRunnable[i].getIterationsSelf();
+			totalAllTogether += countingRunnable[i].getIterationsAllTogether();			
+			if (minOOB == -1 || countingRunnable[i].getIterationsNotAllTogether() < minOOB)
+				minOOB = countingRunnable[i].getIterationsNotAllTogether();
+			if (maxOOB == -1 || countingRunnable[i].getIterationsNotAllTogether() > maxOOB)
 			{
-				maxOOB = counters[i].getIterationsNotAllTogether();
-				maxRatio = 1.0f * maxOOB / counters[i].getIterationsSelf();
+				maxOOB = countingRunnable[i].getIterationsNotAllTogether();
+				maxRatio = 1.0 * maxOOB / countingRunnable[i].getIterationsSelf();
 			}
 		}
-		System.out.println("total in-threads iterations = " + total);
-		System.out.println("total iterations while running all threads: " + totalAllTogether + " (~" + (100 - (100 * (total - totalAllTogether) / total)) + "% of total)");
-		System.out.println("out-of-band iterations per thread: min = " + minOOB + " - max = " + maxOOB + " (~" + maxRatio + "%)");
-		System.out.println("shared counter result = " + sharedCounter_s.get() + " (should be " + total + ")");
-		if (total != sharedCounter_s.get())
-			System.out.println("THIS IS BAD (local <> shared)");
+                if (verbose_s)
+                {
+        		System.out.println("total self-counting iterations = " + totalSelf);
+	        	System.out.println("total self-counting iteration in presence of all threads: " + totalAllTogether + " (~" + (100 - (100 * (totalSelf - totalAllTogether) / totalSelf)) + "% of total)");
+	        	System.out.println("out-of-band iterations (not all threads running): best thread: " + minOOB + " - worst thread: " + maxOOB + " (~" + (100 * maxRatio) + "%)");
+                }
+		System.out.println("total shared counter iterations = " + sharedCounter_s.get() + " (should be " + totalSelf + ")");
+		if (totalSelf != sharedCounter_s.get())
+			System.out.println("SHARED COUNTER NOT THREAD-SAFE (total-self <> total-shared)");
 		else
-			System.out.println("Seems to be OK (local = shared)");			
+			System.out.println("shared counter is safe (total-self = total-shared)");
 		
-		System.out.println("all together duration: " + (timeStopMS_s - timeStartMS_s) / 1000.0 + " seconds");
-		float perSec = totalAllTogether * 1000.0f / (timeStopMS_s - timeStartMS_s);
-		System.out.println("Iterations per seconds: " + (perSec / 1000000.0f) + " M/s");
-		
-		String ratios = new String();
-		float ratioTotal = 0;
-		for (int i = 0; i < threadNumber; i++)
-		{
-			float ratio = ((1f * threadNumber * counters[i].getIterationsAllTogether()) / totalAllTogether);
-			ratioTotal += ratio;
-			ratios += (int)((100f * ratio) + 0.5f) + " ";
-		}
-		System.out.println("execution time ratios: " + ratios);
-		System.out.println("ratio average = " + (100f * ratioTotal / threadNumber));
+                if (verbose_s)
+        		System.out.println("all together duration: " + (timeStopMS_s - timeStartMS_s) / 1000.0 + " seconds");
+		double perSec = totalAllTogether * 1000.0 / (timeStopMS_s - timeStartMS_s);
+		System.out.println("iterations per seconds for " + sharedCounter_s.type() + ": " + (perSec / 1000000.0f) + " M/s");
+	
+	        if (verbose_s || prio)
+	        {
+        		String ratios = new String();
+        		double ratioTotal = 0;
+        		for (int i = 0; i < threadNumber; i++)
+        		{
+        			double ratio = ((1.0 * threadNumber * countingRunnable[i].getIterationsAllTogether()) / totalAllTogether);
+        			ratioTotal += ratio;
+        			ratios += (int)((100.0 * ratio) + 0.5) + " ";
+        		}
+        		System.out.println("execution time ratios: " + ratios);
+        		if (verbose_s)
+                		System.out.println("autocheck ratio average = " + (100 * ratioTotal / threadNumber) + " (should be ~100)");
+                }
 	}
 
 	public static void help ()
@@ -165,6 +175,7 @@ public class JavaMutexPerfs implements Runnable
 	        System.out.println("	-n <#>		- thread number");
 	        System.out.println("	-p <0|1>	- whether to use prio (1) or not (0)");
 	        System.out.println("	-t <#>		- running duration per test in ms");
+	        System.out.println("	-v		- verbose");
 	}
 
 	public static void main (String args[]) throws InterruptedException
@@ -181,6 +192,8 @@ public class JavaMutexPerfs implements Runnable
                                 prio = args[++i].charAt(0) != '0';
                         else if (args[i].equals("-t"))
                                 timeMS = new Integer(args[++i]).intValue();
+                        else if (args[i].equals("-v"))
+                                verbose_s = true;
                         else if (args[i].equals("-h") || args[i].equals("--help"))
                                 help();
                         else
