@@ -5,7 +5,6 @@ public class JavaMutexPerfs implements Runnable
 {
 	private long iterationsAllTogether;
 	private long iterationsSelf;
-	private long iterationsNotAllTogether;
 	private int id;
 	
 	private static Counter sharedCounter_s;
@@ -22,7 +21,6 @@ public class JavaMutexPerfs implements Runnable
 		this.id = id;
 		iterationsSelf = 0;
 		iterationsAllTogether = 0;
-		iterationsNotAllTogether = 0;
 	}
 	
 	public void run ()
@@ -45,9 +43,6 @@ public class JavaMutexPerfs implements Runnable
 			if (aliveCounter_s.get() == threadNumber_s)
         			// when all threads are running concurrently
 				++iterationsAllTogether;
-			else
-			        // when not all threads are running concurrently
-				++iterationsNotAllTogether;
 		}
 
 		if (timeStopMS_s == 0)
@@ -74,11 +69,6 @@ public class JavaMutexPerfs implements Runnable
 		return iterationsAllTogether;
 	}
 	
-	public long getIterationsNotAllTogether ()
-	{
-		return iterationsNotAllTogether;
-	}
-
 	public static void test (Counter counter, int threadNumber, int timeMS, boolean prio) throws InterruptedException
 	{
 		stop_s = false;
@@ -117,7 +107,7 @@ public class JavaMutexPerfs implements Runnable
 		// wait for them to really stop
 		for (int i = 0; i < threadNumber; i++)
 			countingThreads[i].join();
-			
+
 		long totalSelf = 0;
 		long totalAllTogether = 0;
 		long minOOB = -1;
@@ -126,12 +116,13 @@ public class JavaMutexPerfs implements Runnable
 		for (int i = 0; i < threadNumber; i++)
 		{
 			totalSelf += countingRunnable[i].getIterationsSelf();
-			totalAllTogether += countingRunnable[i].getIterationsAllTogether();			
-			if (minOOB == -1 || countingRunnable[i].getIterationsNotAllTogether() < minOOB)
-				minOOB = countingRunnable[i].getIterationsNotAllTogether();
-			if (maxOOB == -1 || countingRunnable[i].getIterationsNotAllTogether() > maxOOB)
+			totalAllTogether += countingRunnable[i].getIterationsAllTogether();
+			long notAllTogether = countingRunnable[i].getIterationsSelf() - countingRunnable[i].getIterationsAllTogether();
+			if (minOOB == -1 || notAllTogether < minOOB)
+				minOOB = notAllTogether;
+			if (maxOOB == -1 || notAllTogether > maxOOB)
 			{
-				maxOOB = countingRunnable[i].getIterationsNotAllTogether();
+				maxOOB = notAllTogether;
 				maxRatio = 1.0 * maxOOB / countingRunnable[i].getIterationsSelf();
 			}
 		}
