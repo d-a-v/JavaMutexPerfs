@@ -1,0 +1,11 @@
+(
+opts="-p 1 -t 120000 -n 2"
+
+./run-with-gcj $opts
+export PATH=/usr/lib/jvm/java-7-openjdk-amd64/bin:$PATH
+./run-with-jvm $opts
+export PATH=/usr/lib/jvm/java-8-oracle/bin:$PATH
+./run-with-jvm $opts
+) >& /tmp/javaperf.$$
+
+egrep -e "^(java|iteration|execution)" /tmp/javaperf.$$
