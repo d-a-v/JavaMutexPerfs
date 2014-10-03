@@ -91,7 +91,7 @@ public class JavaMutexPerfs implements Runnable
 		if (prio) 
 			for (int i = 0; i < threadNumber; i++)
 			{
-				//countingThreads[i].getThreadGroup().setMaxPriority(Thread.MAX_PRIORITY);
+				countingThreads[i].getThreadGroup().setMaxPriority(Thread.MAX_PRIORITY);
 				countingThreads[i].setPriority((i == (threadNumber - 1))? Thread.MAX_PRIORITY: Thread.MIN_PRIORITY);
 			}
 		
@@ -151,7 +151,11 @@ public class JavaMutexPerfs implements Runnable
         		{
         			double ratio = ((1.0 * threadNumber * countingRunnable[i].getIterationsAllTogether()) / totalAllTogether);
         			ratioTotal += ratio;
-        			ratios += (int)((100.0 * ratio) + 0.5) + " ";
+        			if (countingThreads[i].getPriority() != countingThreads[0].getPriority())
+        			        ratios += (int)((100.0 * ratio) + 0.5) + "(prio=" + countingThreads[i].getPriority() + ">" + countingThreads[0].getPriority() + ") ";
+                    else
+        			        ratios += (int)((100.0 * ratio) + 0.5) + " ";
+        
         		}
         		System.out.println("execution time ratios: " + ratios);
         		if (verbose_s)
@@ -197,7 +201,6 @@ public class JavaMutexPerfs implements Runnable
                 
                 System.out.println("running with " + n + " threads during " + timeMS + "ms with" + (prio? "": "out") + " priority on last thread.");
 		
-		System.out.println("Doing stats for " + n + " threads during + " + ((timeMS + 999) / 1000) + " seconds");
 		System.out.println("");
 		
 		test(new CounterNoLock(), n, timeMS, prio);
