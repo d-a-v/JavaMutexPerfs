@@ -1,8 +1,12 @@
 (
-opts="-p 1 -t 120000 -n 2"
+opts="-p 1 -t 120000 -n 8"
 
 ./run-with-gcj $opts
+export PATH=/usr/lib/jvm/java-6-openjdk-amd64/bin:$PATH
+./run-with-jvm $opts
 export PATH=/usr/lib/jvm/java-7-openjdk-amd64/bin:$PATH
+./run-with-jvm $opts
+export PATH=/usr/lib/jvm/java-7-oracle/bin:$PATH
 ./run-with-jvm $opts
 export PATH=/usr/lib/jvm/java-8-oracle/bin:$PATH
 ./run-with-jvm $opts
